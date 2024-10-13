@@ -1,11 +1,16 @@
-import sha1 from 'sha1';
-import { v4 as uuidv4 } from 'uuid';
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
+
+const sha1 = require('sha1');
+const { v4: uuidv4 } = require('uuid');
 
 class AuthController {
   static async getConnect(req, res) {
     try {
+      if (!dbClient.isAlive()) {
+        return res.status(500).json({ error: 'Database connection error' });
+      }
+
       const authHeader = req.headers.authorization;
       if (!authHeader || !authHeader.startsWith('Basic ')) {
         return res.status(401).send('Unauthorized');
@@ -15,7 +20,8 @@ class AuthController {
       const credentials = Buffer.from(base64Credentials, 'base64').toString('ascii');
       const [email, password] = credentials.split(':');
 
-      const user = await dbClient.getUserByEmail(email);
+      // Fetch user by email and verify the hashed password
+      const user = await dbClient.db.collection('users').findOne({ email });
       if (!user || user.password !== sha1(password)) {
         return res.status(401).send('Unauthorized');
       }
