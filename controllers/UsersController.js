@@ -1,5 +1,6 @@
 import sha1 from 'sha1';
 import dbClient from '../utils/db';
+import redisClient from '../utils/redis';
 
 class UsersController {
   static async postNew(req, res) {
@@ -34,6 +35,28 @@ class UsersController {
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   }
+
+    static async getMe(req, res) {
+        try {
+            const { token } = req.headers;
+
+            const userId = await redisClient.get(`auth_${token}`);
+            if (!userId) {
+                return res.status(401).send('Unauthorized');
+            }
+
+            const user = await dbClient.getUserById(userId);
+            if (!user) {
+                return res.status(401).send('Unauthorized');
+            }
+
+            return res.status(200).json({ id: user._id, email: user.email });
+
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ error: 'Internal Server Error' });
+        }
+    }
 }
 
 export default UsersController;

@@ -1,4 +1,4 @@
-const { MongoClient } = require('mongodb');
+const { MongoClient, ObjectId } = require('mongodb');
 
 class DBClient {
   constructor() {
@@ -8,24 +8,42 @@ class DBClient {
     const url = `mongodb://${host}:${port}`;
 
     this.client = new MongoClient(url, { useUnifiedTopology: true });
+    this.db = null;
+
+    // Connect to the database
     this.client.connect()
       .then(() => {
         console.log('DB connected');
         this.db = this.client.db(database);
       })
-      .catch((err) => console.log(err));
+      .catch((err) => console.error('Database connection error:', err));
   }
 
-  isAlive() {
-    return !!this.db;
+  async ensureConnected() {
+    if (!this.db) {
+      throw new Error('Database connection not established');
+    }
+    return this.db;
   }
 
   async nbUsers() {
-    return this.db.collection('users').countDocuments();
+    const db = await this.ensureConnected();
+    return db.collection('users').countDocuments();
   }
 
   async nbFiles() {
-    return this.db.collection('files').countDocuments();
+    const db = await this.ensureConnected();
+    return db.collection('files').countDocuments();
+  }
+
+  async getUserByEmail(email) {
+    const db = await this.ensureConnected();
+    return db.collection('users').findOne({ email });
+  }
+
+  async getUserById(id) {
+    const db = await this.ensureConnected();
+    return db.collection('users').findOne({ _id: new ObjectId(id) });
   }
 }
 
