@@ -4,6 +4,7 @@ import path from 'path';
 import { ObjectId } from 'mongodb';
 import UserUtils from '../utils/user';
 import dbClient from '../utils/db';
+import redisClient from '../utils/redis';
 
 class FilesController {
   static async postUpload(req, res) {
@@ -90,12 +91,18 @@ class FilesController {
 
   static async getShow(req, res) {
     try {
-      const user = await UserUtils.getUserIdFromToken(req);
+      const token = req.headers['x-token'];
+      if (!token) { return res.status(401).json({ error: 'Unauthorized' }); }
+      const keyID = await redisClient.get(`auth_${token}`);
+      if (!keyID) { return res.status(401).json({ error: 'Unauthorized' }); }
+      const user = await dbClient.db.collection('users').findOne({ _id: ObjectId(keyID) });
       if (!user) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
       const fileId = req.params.id || '';
+      console.log('User ID:', user._id);
+      console.log('File ID:', fileId);
       const file = await dbClient.db.collection('files').findOne({ _id: ObjectId(fileId), userId: user._id });
       if (!file) {
         return res.status(404).json({ error: 'Not found' });
