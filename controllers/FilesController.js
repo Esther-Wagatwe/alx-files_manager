@@ -6,9 +6,9 @@ import UserUtils from '../utils/user';
 import dbClient from '../utils/db';
 
 class FilesController {
-    static async postUpload(req, res) {
+  static async postUpload(req, res) {
     try {
-        const userid = await UserUtils.getUserIdFromToken(req);
+      const userid = await UserUtils.getUserIdFromToken(req);
 
       if (!userid) {
         return res.status(401).json({ error: 'Unauthorized' });
@@ -50,7 +50,14 @@ class FilesController {
 
       if (type === 'folder') {
         const result = await dbClient.db.collection('files').insertOne(newFile);
-        return res.status(201).json({ id: result.insertedId, ...newFile });
+        return res.status(201).json({
+          id: result.insertedId,
+          userId: newFile.userId,
+          name: newFile.name,
+          type: newFile.type,
+          isPublic: newFile.isPublic,
+          parentId: newFile.parentId,
+        });
       }
 
       const folderPath = process.env.FOLDER_PATH || '/tmp/files_manager';
