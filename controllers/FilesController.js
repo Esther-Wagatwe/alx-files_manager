@@ -6,7 +6,7 @@ import userUtils from '../utils/user';
 import dbClient from '../utils/db';
 
 class FilesController {
-  static async postNew(req, res) {
+  static async postUpload(req, res) {
     try {
       const userid = await userUtils.getUserIdFromToken(req);
 
