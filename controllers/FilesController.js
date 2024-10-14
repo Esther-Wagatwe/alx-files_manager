@@ -123,19 +123,24 @@ class FilesController {
       }
 
       const parentId = req.query.parentId || '0';
-      const pagination = req.query.page || 0;
+      const pagination = parseInt(req.query.page, 10) || 0;
 
-      const aggregationMatch = { $and: [{ parentId }] };
+      const aggregationMatch = {
+        $and: [
+          { parentId },
+          { userId: user._id },
+        ],
+      };
+
       let aggregateData = [
         { $match: aggregationMatch },
         { $skip: pagination * 20 },
         { $limit: 20 },
       ];
-      if (parentId === 0) aggregateData = [{ $skip: pagination * 20 }, { $limit: 20 }];
 
-      const files = await dbClient.db
-        .collection('files')
-        .aggregate(aggregateData);
+      if (parentId === '0') aggregateData = [{ $skip: pagination * 20 }, { $limit: 20 }];
+
+      const files = await dbClient.db.collection('files').aggregate(aggregateData);
       const filesArray = [];
       await files.forEach((item) => {
         const fileItem = {
