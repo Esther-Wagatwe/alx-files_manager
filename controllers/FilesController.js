@@ -122,18 +122,24 @@ class FilesController {
 
   static async getIndex(req, res) {
     try {
-      const user = await UserUtils.getUserIdFromToken(req);
+      let user = await UserUtils.getUserIdFromToken(req);
       if (!user) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
-      const parentId = req.query.parentId || '0';
+      const userId = ObjectId(user);
+
+      let parentId = req.query.parentId || '0';
+      if (parentId !== '0') {
+        parentId = ObjectId(parentId);
+      }
+
       const pagination = parseInt(req.query.page, 10) || 0;
 
       const aggregationMatch = {
         $and: [
           { parentId },
-          { userId: user._id },
+          { userId: userId },
         ],
       };
 
