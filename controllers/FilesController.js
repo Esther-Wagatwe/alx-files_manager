@@ -122,7 +122,7 @@ class FilesController {
 
   static async getIndex(req, res) {
     try {
-      let user = await UserUtils.getUserIdFromToken(req);
+      const user = await UserUtils.getUserIdFromToken(req);
       if (!user) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
@@ -139,7 +139,7 @@ class FilesController {
       const aggregationMatch = {
         $and: [
           { parentId },
-          { userId: userId },
+          { userId },
         ],
       };
 
