@@ -169,15 +169,12 @@ class FilesController {
   static async putPublish(req, res) {
     try {
       const user = await UserUtils.getUserIdFromToken(req);
-      console.log(`user: ${user}`);
-      console.log(`typeof user: ${typeof user}`);
+
       if (!user) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
       const fileId = req.params.id || '';
-      console.log(`fileId: ${fileId}`);
-      console.log(`typeof fileId: ${typeof fileId}`);
       let file = await dbClient.db.collection('files').findOne({ _id: ObjectId(fileId), userId: ObjectId(user) });
       if (!file) {
         return res.status(404).json({ error: 'Not found' });
@@ -189,7 +186,6 @@ class FilesController {
       );
 
       file = await dbClient.db.collection('files').findOne({ _id: ObjectId(fileId), userId: ObjectId(user) });
-      console.log(`file: ${file}`);
       return res.status(200).json({
         id: file._id,
         userId: file.userId,
