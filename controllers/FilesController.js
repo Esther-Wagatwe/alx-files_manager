@@ -165,6 +165,78 @@ class FilesController {
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   }
+
+  static async putPublish(req, res) {
+    try {
+      const user = await UserUtils.getUserIdFromToken(req);
+      console.log(`user: ${user}`);
+      console.log(`typeof user: ${typeof user}`);
+      if (!user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const fileId = req.params.id || '';
+      console.log(`fileId: ${fileId}`);
+      console.log(`typeof fileId: ${typeof fileId}`);
+      let file = await dbClient.db.collection('files').findOne({ _id: ObjectId(fileId), userId: ObjectId(user) });
+      if (!file) {
+        return res.status(404).json({ error: 'Not found' });
+      }
+
+      await dbClient.db.collection('files').updateOne(
+        { _id: ObjectId(fileId) },
+        { $set: { isPublic: true } },
+      );
+
+      file = await dbClient.db.collection('files').findOne({ _id: ObjectId(fileId), userId: ObjectId(user) });
+      console.log(`file: ${file}`);
+      return res.status(200).json({
+        id: file._id,
+        userId: file.userId,
+        name: file.name,
+        type: file.type,
+        isPublic: file.isPublic,
+        parentId: file.parentId,
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  }
+
+  static async putUnpublish(req, res) {
+    try {
+      const user = await UserUtils.getUserIdFromToken(req);
+      if (!user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const fileId = req.params.id || '';
+      let file = await dbClient.db.collection('files').findOne({ _id: ObjectId(fileId), userId: ObjectId(user) });
+      if (!file) {
+        return res.status(404).json({ error: 'Not found' });
+      }
+
+      await dbClient.db.collection('files').updateOne(
+        { _id: ObjectId(fileId) },
+        { $set: { isPublic: false } },
+      );
+
+      file = await dbClient.db.collection('files').findOne({ _id: ObjectId(fileId), userId: ObjectId(user) });
+
+      return res.status(200).json({
+        id: file._id,
+        userId: file.userId,
+        name: file.name,
+        type: file.type,
+        isPublic: file.isPublic,
+        parentId: file.parentId,
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  }
 }
 
 export default FilesController;
